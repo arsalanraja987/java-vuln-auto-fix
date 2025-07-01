@@ -1,10 +1,9 @@
 import re
 import os
+import subprocess
 
-# Vulnerable pattern to look for
+# Pattern and replacement
 VULN_PATTERN = r'File file = new File\("/var/data/" \+ fileName\);'
-
-# Secure code to replace it with
 SAFE_CODE = '''File baseDir = new File("/var/data/");
 File file = new File(baseDir, fileName).getCanonicalFile();
 if (!file.getPath().startsWith(baseDir.getCanonicalPath())) {
@@ -12,6 +11,10 @@ if (!file.getPath().startsWith(baseDir.getCanonicalPath())) {
 }'''
 
 def fix_file(file_path):
+    if not os.path.exists(file_path):
+        print(f"❌ File not found: {file_path}")
+        return
+
     with open(file_path, 'r') as f:
         content = f.read()
 
@@ -21,11 +24,12 @@ def fix_file(file_path):
         with open(file_path, 'w') as f:
             f.write(content)
 
-        os.system("git config --global user.name 'AutoFix Bot'")
-        os.system("git config --global user.email 'bot@example.com'")
-        os.system(f"git add {file_path}")
-        os.system("git commit -m 'Fix: Path Traversal Vulnerability'")
-        os.system("git push")
+        # Git auto commit
+        subprocess.run(["git", "config", "--global", "user.name", "AutoFix Bot"])
+        subprocess.run(["git", "config", "--global", "user.email", "bot@example.com"])
+        subprocess.run(["git", "add", file_path])
+        subprocess.run(["git", "commit", "-m", "Fix: Path Traversal Vulnerability"])
+        subprocess.run(["git", "push"])
     else:
         print("✅ No vulnerability found.")
 
